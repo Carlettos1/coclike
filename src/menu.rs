@@ -1,16 +1,19 @@
 use crate::prelude::*;
 use bevy::prelude::*;
 
-pub fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
+pub fn setup_menu(mut commands: Commands, _asset_server: Res<AssetServer>) {
     commands
-        .spawn(Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
-            flex_direction: FlexDirection::Column,
-            ..default()
-        })
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            MainMenuUI,
+        ))
         .with_children(|parent| {
             // Game title
             parent.spawn((
@@ -58,11 +61,17 @@ pub fn menu_interactions(
             match button {
                 MenuButton::Play => {
                     next_state.set(GameState::Playing);
-                    println!("Play button pressed");
+                    info!("Play button pressed");
                 }
                 MenuButton::Editor => next_state.set(GameState::LevelEditor),
                 MenuButton::Quit => std::process::exit(0),
             }
         }
+    }
+}
+
+pub fn cleanup_menu(mut commands: Commands, query: Query<Entity, With<MainMenuUI>>) {
+    for entity in &query {
+        commands.entity(entity).despawn_recursive();
     }
 }

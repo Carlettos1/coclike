@@ -76,6 +76,25 @@ pub struct GridPosition {
     pub y: usize,
 }
 
+impl GridPosition {
+    pub fn new_full(
+        x: usize,
+        y: usize,
+        width: usize,
+        height: usize,
+    ) -> (Self, Transform, GridSize) {
+        (
+            Self { x, y },
+            Transform::from_xyz(
+                x as f32 + width as f32 / 2.0,
+                y as f32 + height as f32 / 2.0,
+                1.0,
+            ),
+            GridSize { width, height },
+        )
+    }
+}
+
 // For entities that occupy multiple tiles
 #[derive(Component, Debug, Clone)]
 pub struct GridSize {
@@ -107,10 +126,10 @@ pub enum BuildingType {
     Wall(Wall),
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct TownHall;
 
-#[derive(Component, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct ResourceCollector {
     pub resource_type: ResourceType,
     pub production_rate: f32,
@@ -125,7 +144,7 @@ impl ResourceCollector {
     }
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Storage {
     pub resource_type: ResourceType,
     pub capacity: u32,
@@ -140,7 +159,7 @@ impl Storage {
     }
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Defense {
     pub attack_damage: f32,
     pub attack_range: f32,
@@ -157,7 +176,7 @@ impl Defense {
     }
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Wall {
     pub durability: f32,
 }
@@ -231,3 +250,34 @@ pub struct BuildingAssets {
 // Marker for selected entity
 #[derive(Component)]
 pub struct Selected;
+
+#[derive(Component)]
+pub struct GridVisual;
+
+#[derive(Component)]
+pub struct MainMenuUI;
+
+#[derive(Component)]
+pub struct GameCamera {
+    pub speed: f32,
+    pub is_dragging: bool,
+    pub last_position: Option<Vec2>,
+    pub zoom: f32,
+    pub min_zoom: f32,
+    pub max_zoom: f32,
+    pub zoom_speed: f32,
+}
+
+impl Default for GameCamera {
+    fn default() -> Self {
+        Self {
+            speed: 20.0,
+            is_dragging: false,
+            last_position: None,
+            zoom: 6.0,
+            min_zoom: 4.0,
+            max_zoom: 20.0,
+            zoom_speed: 1.0,
+        }
+    }
+}

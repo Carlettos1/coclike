@@ -6,6 +6,7 @@ pub fn setup_game(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
+    info!("Setup game core");
     let map = TileMap::new(100, 100);
     commands.spawn(map);
 
@@ -34,51 +35,43 @@ pub fn setup_game(
         wall: (wall_square, wall_color),
     };
 
-    spawn_initial_buildings(&mut commands, &assets);
     commands.insert_resource(assets);
 }
 
-fn spawn_initial_buildings(commands: &mut Commands, assets: &BuildingAssets) {
-    let town_hall = commands
-        .spawn((
-            Building::new(1000.0),
-            BuildingType::TownHall(TownHall),
-            GridPosition { x: 45, y: 45 },
-            GridSize {
-                width: 4,
-                height: 4,
-            },
-            Mesh2d(assets.town_hall.0.clone()),
-            MeshMaterial2d(assets.town_hall.1.clone()),
-        ))
-        .id();
+pub fn spawn_initial_buildings(mut commands: Commands, assets: Res<BuildingAssets>) {
+    info!("Spawning buildings");
 
-    let gold_mine = commands
-        .spawn((
-            Building::new(500.0),
-            BuildingType::ResourceCollector(ResourceCollector::new(ResourceType::Gold, 10.0)),
-            GridPosition { x: 40, y: 40 },
-            GridSize {
-                width: 3,
-                height: 3,
-            },
-            Mesh2d(assets.resource_collector.0.clone()),
-            MeshMaterial2d(assets.resource_collector.1.clone()),
-        ))
-        .id();
+    commands.spawn((
+        Building::new(1000.0),
+        BuildingType::TownHall(TownHall),
+        GridPosition::new_full(45, 45, 4, 4),
+        Mesh2d(assets.town_hall.0.clone()),
+        MeshMaterial2d(assets.town_hall.1.clone()),
+    ));
 
-    // Add buildings to the map
+    commands.spawn((
+        Building::new(500.0),
+        BuildingType::ResourceCollector(ResourceCollector::new(ResourceType::Gold, 10.0)),
+        GridPosition::new_full(0, 0, 3, 3),
+        Mesh2d(assets.resource_collector.0.clone()),
+        MeshMaterial2d(assets.resource_collector.1.clone()),
+    ));
+
+    // Add buildings to the map (TileMap)
     // Note: In a real implementation, you'd query for the map entity and get
     // the TileMap component to place these correctly
 }
 
-pub fn game_systems(mut set: ParamSet<(Query<()>, Res<PlayerResources>)>) {}
+pub fn game_systems(mut set: ParamSet<(Query<()>, Res<PlayerResources>)>) {
+    trace!("Executing game systems");
+}
 
 pub fn collect_resources(
     time: Res<Time>,
     mut resources: ResMut<PlayerResources>,
     query: Query<&BuildingType>,
 ) {
+    trace!("Collecting resources");
     for building_type in query.iter() {
         if let BuildingType::ResourceCollector(ResourceCollector {
             resource_type,
@@ -102,9 +95,52 @@ pub fn building_placement(
     mut map_query: Query<&mut TileMap>,
     mut resources: ResMut<PlayerResources>,
 ) {
+    info!("TODO: building placement");
     // This would implement mouse-based building placement
     // 1. Convert mouse position to world coordinates
     // 2. Convert world coordinates to grid position
     // 3. Check resource requirements
     // 4. Place building if possible
+}
+
+pub fn setup_grid(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    let grid_size = 100.0;
+    let line_width = 0.1;
+    info!("Setup map grid with len: {grid_size}, wid: {line_width}");
+    let grid_line_material = materials.add(Color::srgba(0.5, 0.5, 0.5, 0.3));
+
+    // Create horizontal and vertical lines
+    for i in 0..=100 {
+        // Horizontal lines
+        commands.spawn((
+            Mesh2d(meshes.add(Rectangle::from_size(Vec2::new(grid_size, line_width)))),
+            MeshMaterial2d(grid_line_material.clone()),
+            Transform::from_xyz(50.0, i as f32, 0.0),
+            GridVisual,
+        ));
+
+        // Vertical lines
+        commands.spawn((
+            Mesh2d(meshes.add(Rectangle::from_size(Vec2::new(line_width, grid_size)))),
+            MeshMaterial2d(grid_line_material.clone()),
+            Transform::from_xyz(i as f32, 50.0, 0.0),
+            GridVisual,
+        ));
+    }
+}
+
+pub fn synchronize_buildings_with_map(
+    mut map_query: Query<&mut TileMap>,
+    building_query: Query<(Entity, &GridPosition, &GridSize), Added<Building>>,
+) {
+    if let Ok(mut tile_map) = map_query.get_single_mut() {
+        for (entity, position, size) in building_query.iter() {
+            info!("Syncing {entity:?} building with map at {position:?} with size {size:?}");
+            tile_map.place_entity(position.x, position.y, entity, (size.width, size.height));
+        }
+    }
 }

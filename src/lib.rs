@@ -1,14 +1,17 @@
 use bevy::prelude::*;
 
+mod buildings;
+mod camera;
 mod components;
 mod game;
 mod menu;
 
 pub mod prelude {
+    pub use crate::buildings::*;
+    pub use crate::camera::*;
     pub use crate::components::*;
     pub use crate::game::*;
     pub use crate::menu::*;
-    pub use crate::setup;
     pub use crate::GameState;
 }
 
@@ -20,8 +23,4 @@ pub enum GameState {
     Playing,
     LevelEditor,
     Paused,
-}
-
-pub fn setup(mut commands: Commands) {
-    commands.spawn(Camera2d);
 }
