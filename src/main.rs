@@ -10,7 +10,14 @@ fn main() {
         .add_systems(OnExit(GameState::MainMenu), cleanup_menu)
         .add_systems(
             OnEnter(GameState::Playing),
-            (setup_game, setup_grid, spawn_initial_buildings).chain(),
+            (
+                setup_game,
+                setup_grid,
+                spawn_initial_buildings,
+                setup_hud,
+                setup_debug_overlay,
+            )
+                .chain(),
         )
         .add_systems(
             Update,
@@ -22,6 +29,9 @@ fn main() {
                     synchronize_buildings_with_map,
                     camera_movement,
                     camera_zoom,
+                    update_resource_display,
+                    update_debug_overlay,
+                    toggle_debug_overlay,
                 )
                     .run_if(in_state(GameState::Playing)),
             ),

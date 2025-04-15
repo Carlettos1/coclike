@@ -281,3 +281,17 @@ impl Default for GameCamera {
         }
     }
 }
+
+#[derive(Component)]
+pub struct GameHUD;
+
+#[derive(Component)]
+pub struct ResourceDisplay;
+
+#[derive(Component)]
+pub struct DebugOverlay;
+
+#[derive(Resource, Default)]
+pub struct DebugState {
+    pub visible: bool,
+}

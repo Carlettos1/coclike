@@ -49,14 +49,6 @@ pub fn spawn_initial_buildings(mut commands: Commands, assets: Res<BuildingAsset
         MeshMaterial2d(assets.town_hall.1.clone()),
     ));
 
-    commands.spawn((
-        Building::new(500.0),
-        BuildingType::ResourceCollector(ResourceCollector::new(ResourceType::Gold, 10.0)),
-        GridPosition::new_full(0, 0, 3, 3),
-        Mesh2d(assets.resource_collector.0.clone()),
-        MeshMaterial2d(assets.resource_collector.1.clone()),
-    ));
-
     // Add buildings to the map (TileMap)
     // Note: In a real implementation, you'd query for the map entity and get
     // the TileMap component to place these correctly
