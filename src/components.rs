@@ -116,20 +116,21 @@ pub enum ResourceType {
     Elixir,
 }
 
-// Building types with their properties
 #[derive(Component, Debug, Clone)]
 pub enum BuildingType {
-    TownHall(TownHall),
-    ResourceCollector(ResourceCollector),
-    Storage(Storage),
-    Defense(Defense),
-    Wall(Wall),
+    TownHall,
+    ResourceCollector,
+    Storage,
+    Defense,
+    Wall,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Component, Debug, Clone)]
+#[require(BuildingType(|| BuildingType::TownHall))]
 pub struct TownHall;
 
-#[derive(Debug, Clone)]
+#[derive(Component, Debug, Clone)]
+#[require(BuildingType(|| BuildingType::ResourceCollector))]
 pub struct ResourceCollector {
     pub resource_type: ResourceType,
     pub production_rate: f32,
@@ -144,7 +145,8 @@ impl ResourceCollector {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Component, Debug, Clone)]
+#[require(BuildingType(|| BuildingType::Storage))]
 pub struct Storage {
     pub resource_type: ResourceType,
     pub capacity: u32,
@@ -159,7 +161,8 @@ impl Storage {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Component, Debug, Clone)]
+#[require(BuildingType(|| BuildingType::Defense))]
 pub struct Defense {
     pub attack_damage: f32,
     pub attack_range: f32,
@@ -176,7 +179,8 @@ impl Defense {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Component, Debug, Clone)]
+#[require(BuildingType(|| BuildingType::Wall))]
 pub struct Wall {
     pub durability: f32,
 }
@@ -187,8 +191,7 @@ impl Wall {
     }
 }
 
-// Building component
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Clone)]
 pub struct Building {
     pub level: u32,
     pub health: f32,
@@ -233,13 +236,14 @@ pub enum TargetPreference {
 }
 
 // Global resource for player resources
-#[derive(Resource, Default)]
+#[derive(Resource, Debug, Default)]
 pub struct PlayerResources {
-    pub resources: HashMap<ResourceType, u32>,
+    pub resources: HashMap<ResourceType, f64>,
 }
 
 #[derive(Resource)]
 pub struct BuildingAssets {
+    // TODO: HashMap<Building Type, (Handle mesh, Handle Colormaterial)>,
     pub town_hall: (Handle<Mesh>, Handle<ColorMaterial>),
     pub resource_collector: (Handle<Mesh>, Handle<ColorMaterial>),
     pub storage: (Handle<Mesh>, Handle<ColorMaterial>),

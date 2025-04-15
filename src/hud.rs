@@ -48,7 +48,7 @@ pub fn update_resource_display(
     let mut text = query.single_mut();
     let mut content = String::new();
     for (resource_type, amount) in &resources.resources {
-        content.push_str(&format!("\n{resource_type:?}: {amount}"));
+        content.push_str(&format!("\n{resource_type:?}: {:.0}", amount.trunc()));
     }
     text.0 = content;
 }
@@ -104,7 +104,7 @@ pub fn update_debug_overlay(
     content.push_str(&format!("Buildings: {}\n", building_count));
     content.push_str("\nResources:");
     for (resource_type, amount) in &resources.resources {
-        content.push_str(&format!("\n  {:?}: {}", resource_type, amount));
+        content.push_str(&format!("\n  {:?}: {:.1}", resource_type, amount));
     }
 
     debug_text.0 = content;

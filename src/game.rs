@@ -11,8 +11,8 @@ pub fn setup_game(
     commands.spawn(map);
 
     let mut resources = HashMap::new();
-    resources.insert(ResourceType::Gold, 1000);
-    resources.insert(ResourceType::Elixir, 1000);
+    resources.insert(ResourceType::Gold, 1000.0);
+    resources.insert(ResourceType::Elixir, 1000.0);
 
     commands.insert_resource(PlayerResources { resources });
 
@@ -41,14 +41,20 @@ pub fn setup_game(
 pub fn spawn_initial_buildings(mut commands: Commands, assets: Res<BuildingAssets>) {
     info!("Spawning buildings");
 
-    commands.spawn((
-        Building::new(1000.0),
-        BuildingType::TownHall(TownHall),
-        GridPosition::new_full(45, 45, 4, 4),
-        Mesh2d(assets.town_hall.0.clone()),
-        MeshMaterial2d(assets.town_hall.1.clone()),
-    ));
+    town_hall(&mut commands, &assets, 1, 45, 45);
+    gold_collector(&mut commands, &assets, 1, 40, 40);
+    elixir_collector(&mut commands, &assets, 1, 50, 40);
+    gold_storage(&mut commands, &assets, 1, 40, 50);
+    elixir_storage(&mut commands, &assets, 1, 50, 50);
+    defense_tower(&mut commands, &assets, 1, 45, 55);
 
+    // Spawn some walls for perimeter protection
+    for i in 0..5 {
+        wall(&mut commands, &assets, 1, 44 + i, 60); // North wall
+        wall(&mut commands, &assets, 1, 44 + i, 40); // South wall
+        wall(&mut commands, &assets, 1, 40, 44 + i); // West wall
+        wall(&mut commands, &assets, 1, 60, 44 + i); // East wall
+    }
     // Add buildings to the map (TileMap)
     // Note: In a real implementation, you'd query for the map entity and get
     // the TileMap component to place these correctly
@@ -61,21 +67,15 @@ pub fn game_systems(mut set: ParamSet<(Query<()>, Res<PlayerResources>)>) {
 pub fn collect_resources(
     time: Res<Time>,
     mut resources: ResMut<PlayerResources>,
-    query: Query<&BuildingType>,
+    query: Query<&ResourceCollector>,
 ) {
-    trace!("Collecting resources");
-    for building_type in query.iter() {
-        if let BuildingType::ResourceCollector(ResourceCollector {
-            resource_type,
-            production_rate,
-        }) = building_type
-        {
-            let amount = (production_rate * time.delta_secs()) as u32;
-            *resources
-                .resources
-                .entry(resource_type.clone())
-                .or_insert(0) += amount;
-        }
+    trace!("Collecting resources {resources:?}");
+    for resource_collector in query.iter() {
+        let amount = (resource_collector.production_rate * time.delta_secs());
+        *resources
+            .resources
+            .entry(resource_collector.resource_type.clone())
+            .or_insert(0.0) += amount as f64;
     }
 }
 
