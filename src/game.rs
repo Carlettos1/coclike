@@ -16,21 +16,23 @@ pub fn setup_game(
 
     commands.insert_resource(PlayerResources { resources });
 
-    let townhall_square = meshes.add(Rectangle::new(4.0, 4.0));
-    let townhall_color = materials.add(Color::linear_rgb(0.0, 1.0, 0.0));
-    let resource_collector_square = meshes.add(Rectangle::new(3.0, 3.0));
-    let resource_collector_color = materials.add(Color::linear_rgb(1.0, 0.0, 1.0));
-    let storage_square = meshes.add(Rectangle::new(4.0, 4.0));
-    let storage_color = materials.add(Color::linear_rgb(1.0, 0.0, 1.0));
-    let defense_square = meshes.add(Rectangle::new(3.0, 3.0));
-    let defense_color = materials.add(Color::linear_rgb(1.0, 0.0, 0.0));
-    let wall_square = meshes.add(Rectangle::new(1.0, 1.0));
-    let wall_color = materials.add(Color::linear_rgb(0.6, 0.5, 0.4));
+    let townhall_square = meshes.add(Rectangle::new(TOWNHALL_SIZE.x, TOWNHALL_SIZE.y));
+    let townhall_color = materials.add(TOWNHALL_COLOR);
+    let resource_collector_square = meshes.add(Rectangle::new(COLLECTOR_SIZE.x, COLLECTOR_SIZE.y));
+    let elixir_color = materials.add(ELIXIR_COLOR);
+    let gold_color = materials.add(GOLD_COLOR);
+    let storage_square = meshes.add(Rectangle::new(STORAGE_SIZE.x, STORAGE_SIZE.y));
+    let defense_square = meshes.add(Rectangle::new(DEFENSE_SIZE.x, DEFENSE_SIZE.y));
+    let defense_color = materials.add(DEFENSE_COLOR);
+    let wall_square = meshes.add(Rectangle::new(WALL_SIZE.x, WALL_SIZE.y));
+    let wall_color = materials.add(WALL_COLOR);
 
     let assets = BuildingAssets {
         town_hall: (townhall_square, townhall_color),
-        resource_collector: (resource_collector_square, resource_collector_color),
-        storage: (storage_square, storage_color),
+        elixir_collector: (resource_collector_square.clone(), elixir_color.clone()),
+        elixir_storage: (storage_square.clone(), elixir_color),
+        gold_collector: (resource_collector_square, gold_color.clone()),
+        gold_storage: (storage_square, gold_color),
         defense: (defense_square, defense_color),
         wall: (wall_square, wall_color),
     };
@@ -71,7 +73,7 @@ pub fn collect_resources(
 ) {
     trace!("Collecting resources {resources:?}");
     for resource_collector in query.iter() {
-        let amount = (resource_collector.production_rate * time.delta_secs());
+        let amount = resource_collector.production_rate * time.delta_secs();
         *resources
             .resources
             .entry(resource_collector.resource_type.clone())
@@ -131,7 +133,7 @@ pub fn synchronize_buildings_with_map(
 ) {
     if let Ok(mut tile_map) = map_query.get_single_mut() {
         for (entity, position, size) in building_query.iter() {
-            info!("Syncing {entity:?} building with map at {position:?} with size {size:?}");
+            debug!("Syncing {entity:?} building with map at {position:?} with size {size:?}");
             tile_map.place_entity(position.x, position.y, entity, (size.width, size.height));
         }
     }

@@ -127,3 +127,36 @@ pub fn toggle_debug_overlay(
         }
     }
 }
+
+pub fn setup_lower_ui(mut commands: Commands) {
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                ..default()
+            },
+            GameHUD,
+        ))
+        .with_children(|parent| {
+            // Build button (bottom right)
+            parent
+                .spawn((
+                    Button,
+                    Node {
+                        width: Val::Auto,
+                        height: Val::Auto,
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Px(10.0),
+                        right: Val::Px(10.0),
+                        padding: UiRect::all(Val::Px(10.0)),
+                        ..default()
+                    },
+                    BackgroundColor(BROWN_SATURATED),
+                    MenuButton::Editor,
+                ))
+                .with_children(|parent| {
+                    parent.spawn(Text("Editor".into()));
+                });
+        });
+}

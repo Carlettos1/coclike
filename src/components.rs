@@ -1,7 +1,7 @@
 use bevy::{prelude::*, utils::HashMap};
 
 // Button marker component
-#[derive(Component)]
+#[derive(Component, Debug, Clone, Copy)]
 pub enum MenuButton {
     Play,
     Editor,
@@ -35,6 +35,22 @@ impl TileMap {
 
     pub fn get_entity_at(&self, x: usize, y: usize) -> Option<Entity> {
         self.get_tile_idx(x, y).and_then(|idx| self.tiles[idx])
+    }
+
+    pub fn can_place(&mut self, x: usize, y: usize, size: (usize, usize)) -> bool {
+        // Check if all required tiles are free
+        for dy in 0..size.1 {
+            for dx in 0..size.0 {
+                if let Some(idx) = self.get_tile_idx(x + dx, y + dy) {
+                    if self.tiles[idx].is_some() {
+                        return false; // Tile already occupied
+                    }
+                } else {
+                    return false; // Out of bounds
+                }
+            }
+        }
+        true
     }
 
     pub fn place_entity(
@@ -110,17 +126,17 @@ pub struct UnitPosition {
 }
 
 // Resource types
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum ResourceType {
     Gold,
     Elixir,
 }
 
-#[derive(Component, Debug, Clone)]
+#[derive(Component, Debug, Clone, Copy)]
 pub enum BuildingType {
     TownHall,
-    ResourceCollector,
-    Storage,
+    Collector(ResourceType),
+    Storage(ResourceType),
     Defense,
     Wall,
 }
@@ -130,7 +146,6 @@ pub enum BuildingType {
 pub struct TownHall;
 
 #[derive(Component, Debug, Clone)]
-#[require(BuildingType(|| BuildingType::ResourceCollector))]
 pub struct ResourceCollector {
     pub resource_type: ResourceType,
     pub production_rate: f32,
@@ -146,7 +161,6 @@ impl ResourceCollector {
 }
 
 #[derive(Component, Debug, Clone)]
-#[require(BuildingType(|| BuildingType::Storage))]
 pub struct Storage {
     pub resource_type: ResourceType,
     pub capacity: u32,
@@ -245,8 +259,10 @@ pub struct PlayerResources {
 pub struct BuildingAssets {
     // TODO: HashMap<Building Type, (Handle mesh, Handle Colormaterial)>,
     pub town_hall: (Handle<Mesh>, Handle<ColorMaterial>),
-    pub resource_collector: (Handle<Mesh>, Handle<ColorMaterial>),
-    pub storage: (Handle<Mesh>, Handle<ColorMaterial>),
+    pub elixir_collector: (Handle<Mesh>, Handle<ColorMaterial>),
+    pub elixir_storage: (Handle<Mesh>, Handle<ColorMaterial>),
+    pub gold_collector: (Handle<Mesh>, Handle<ColorMaterial>),
+    pub gold_storage: (Handle<Mesh>, Handle<ColorMaterial>),
     pub defense: (Handle<Mesh>, Handle<ColorMaterial>),
     pub wall: (Handle<Mesh>, Handle<ColorMaterial>),
 }
@@ -298,4 +314,21 @@ pub struct DebugOverlay;
 #[derive(Resource, Default)]
 pub struct DebugState {
     pub visible: bool,
+}
+
+#[derive(Component)]
+pub struct BuildButton;
+
+#[derive(Component)]
+pub struct BuildUI;
+
+#[derive(Component)]
+pub enum EditorButton {
+    Building(BuildingType),
+    Back,
+}
+
+#[derive(Resource, Default, Debug)]
+pub struct EditorState {
+    pub selected_building: Option<BuildingType>,
 }

@@ -36,7 +36,7 @@ pub fn setup_menu(mut commands: Commands, _asset_server: Res<AssetServer>) {
                         align_items: AlignItems::Center,
                         ..default()
                     },
-                    BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
+                    BackgroundColor(DARK_GRAY),
                     MenuButton::Play,
                 ))
                 .with_children(|parent| {
@@ -54,23 +54,39 @@ pub fn setup_menu(mut commands: Commands, _asset_server: Res<AssetServer>) {
 // Menu interaction system
 pub fn menu_interactions(
     mut next_state: ResMut<NextState<GameState>>,
-    mut interaction_query: Query<(&Interaction, &MenuButton), (Changed<Interaction>, With<Button>)>,
+    mut interaction_query: Query<
+        (&Interaction, &MenuButton, &mut BackgroundColor),
+        (Changed<Interaction>, With<Button>),
+    >,
 ) {
-    for (interaction, button) in &mut interaction_query {
-        if *interaction == Interaction::Pressed {
-            match button {
-                MenuButton::Play => {
-                    next_state.set(GameState::Playing);
-                    info!("Play button pressed");
-                }
+    for (interaction, button, mut bg_color) in &mut interaction_query {
+        info!("Main state Interaction: {interaction:?} on button {button:?}");
+        match *interaction {
+            Interaction::Pressed => match button {
+                MenuButton::Play => next_state.set(GameState::Playing),
                 MenuButton::Editor => next_state.set(GameState::LevelEditor),
                 MenuButton::Quit => std::process::exit(0),
-            }
+            },
+            Interaction::Hovered => match button {
+                MenuButton::Editor => *bg_color = BROWN.into(),
+                MenuButton::Play => *bg_color = GRAY.into(),
+                MenuButton::Quit => *bg_color = GRAY.into(),
+            },
+            Interaction::None => match button {
+                MenuButton::Editor => *bg_color = BROWN_SATURATED.into(),
+                MenuButton::Play => *bg_color = DARK_GRAY.into(),
+                MenuButton::Quit => *bg_color = DARK_GRAY.into(),
+            },
         }
     }
 }
 
 pub fn cleanup_menu(mut commands: Commands, query: Query<Entity, With<MainMenuUI>>) {
+    info!(
+        "Doing menu cleanup of: {} items",
+        query.iter().remaining().count()
+    );
+
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }
