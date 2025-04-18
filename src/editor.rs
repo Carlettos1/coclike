@@ -121,13 +121,12 @@ fn spawn_building_button(parent: &mut ChildBuilder, name: &str, button_type: Edi
         });
 }
 
+type QueryTuple<'a> = (&'a Interaction, &'a EditorButton, &'a mut BackgroundColor);
+type Filters = (Changed<Interaction>, With<Button>);
 pub fn editor_interactions(
     mut next_state: ResMut<NextState<GameState>>,
     mut editor_state: ResMut<EditorState>,
-    mut button_query: Query<
-        (&Interaction, &EditorButton, &mut BackgroundColor),
-        (Changed<Interaction>, With<Button>),
-    >,
+    mut button_query: Query<QueryTuple, Filters>,
 ) {
     for (interaction, button, mut bg_color) in button_query.iter_mut() {
         match *interaction {
@@ -138,6 +137,7 @@ pub fn editor_interactions(
                     }
                     EditorButton::Building(building) => {
                         editor_state.selected_building = Some(*building);
+                        editor_state.is_selected = true;
                     }
                 }
                 *bg_color = Color::srgb(0.35, 0.35, 0.35).into();
@@ -147,6 +147,7 @@ pub fn editor_interactions(
             }
             Interaction::None => {
                 *bg_color = Color::srgb(0.15, 0.15, 0.15).into();
+                editor_state.is_selected = false;
             }
         }
     }
@@ -158,10 +159,13 @@ pub fn place_editor_building(
     windows: Query<&Window>,
     camera_q: Query<(&Camera, &GlobalTransform)>,
     mut map_query: Query<&mut TileMap>,
-    editor_state: Res<EditorState>,
+    mut editor_state: ResMut<EditorState>,
     assets: Res<BuildingAssets>,
 ) {
     if buttons.just_pressed(MouseButton::Left) {
+        if editor_state.is_selected {
+            return;
+        }
         if let Some(building_type) = &editor_state.selected_building {
             // Get cursor position in world
             let (camera, camera_transform) = camera_q.single();
@@ -173,19 +177,19 @@ pub fn place_editor_building(
                     let grid_x = world_pos.x.floor() as usize;
                     let grid_y = world_pos.y.floor() as usize;
 
-                    // Place building at grid position
-                    let _entity = place_building(
-                        &mut commands,
-                        &assets,
-                        *building_type,
-                        1, // Default to level 1
-                        grid_x,
-                        grid_y,
-                    );
-                    info!("Placed {:?} at ({}, {})", building_type, grid_x, grid_y);
-
-                    if let Ok(mut _map) = map_query.get_single_mut() {
-                        // TODO: info! map.can_place(x, y, size)
+                    if let Ok(mut map) = map_query.get_single_mut() {
+                        if map.can_place(grid_x, grid_y, to_size(*building_type)) {
+                            place_building(
+                                &mut commands,
+                                &assets,
+                                *building_type,
+                                1,
+                                grid_x,
+                                grid_y,
+                            );
+                            info!("Placed {:?} at ({}, {})", building_type, grid_x, grid_y);
+                            editor_state.selected_building = None;
+                        }
                     }
                 }
             }

@@ -31,7 +31,6 @@ fn main() {
             (
                 menu_interactions,
                 (
-                    game_systems,
                     collect_resources,
                     synchronize_buildings_with_map,
                     camera_movement,
@@ -42,6 +41,7 @@ fn main() {
                 )
                     .run_if(in_state(GameState::Playing)),
                 (
+                    synchronize_buildings_with_map,
                     editor_interactions,
                     place_editor_building,
                     camera_movement,

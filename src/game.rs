@@ -26,16 +26,27 @@ pub fn setup_game(
     let defense_color = materials.add(DEFENSE_COLOR);
     let wall_square = meshes.add(Rectangle::new(WALL_SIZE.x, WALL_SIZE.y));
     let wall_color = materials.add(WALL_COLOR);
+    let default_color = materials.add(WHITE);
 
-    let assets = BuildingAssets {
-        town_hall: (townhall_square, townhall_color),
-        elixir_collector: (resource_collector_square.clone(), elixir_color.clone()),
-        elixir_storage: (storage_square.clone(), elixir_color),
-        gold_collector: (resource_collector_square, gold_color.clone()),
-        gold_storage: (storage_square, gold_color),
-        defense: (defense_square, defense_color),
-        wall: (wall_square, wall_color),
-    };
+    let townhall = Handles::new(&townhall_square, &townhall_color);
+    let elixir_collector = Handles::new(&resource_collector_square, &elixir_color);
+    let gold_collector = Handles::new(&resource_collector_square, &gold_color);
+    let elixir_storage = Handles::new(&storage_square, &elixir_color);
+    let gold_storage = Handles::new(&storage_square, &gold_color);
+    let defense = Handles::new(&defense_square, &defense_color);
+    let wall = Handles::new(&wall_square, &wall_color);
+
+    let mut assets = BuildingAssets::new(Handles::new(&wall_square, &default_color));
+    assets.insert(BuildingType::TownHall, townhall);
+    assets.insert(
+        BuildingType::Collector(ResourceType::Elixir),
+        elixir_collector,
+    );
+    assets.insert(BuildingType::Collector(ResourceType::Gold), gold_collector);
+    assets.insert(BuildingType::Storage(ResourceType::Elixir), elixir_storage);
+    assets.insert(BuildingType::Storage(ResourceType::Gold), gold_storage);
+    assets.insert(BuildingType::Defense, defense);
+    assets.insert(BuildingType::Wall, wall);
 
     commands.insert_resource(assets);
 }
@@ -57,13 +68,6 @@ pub fn spawn_initial_buildings(mut commands: Commands, assets: Res<BuildingAsset
         wall(&mut commands, &assets, 1, 40, 44 + i); // West wall
         wall(&mut commands, &assets, 1, 60, 44 + i); // East wall
     }
-    // Add buildings to the map (TileMap)
-    // Note: In a real implementation, you'd query for the map entity and get
-    // the TileMap component to place these correctly
-}
-
-pub fn game_systems(mut set: ParamSet<(Query<()>, Res<PlayerResources>)>) {
-    trace!("Executing game systems");
 }
 
 pub fn collect_resources(
@@ -76,25 +80,9 @@ pub fn collect_resources(
         let amount = resource_collector.production_rate * time.delta_secs();
         *resources
             .resources
-            .entry(resource_collector.resource_type.clone())
+            .entry(resource_collector.resource_type)
             .or_insert(0.0) += amount as f64;
     }
-}
-
-pub fn building_placement(
-    mut commands: Commands,
-    buttons: Res<ButtonInput<MouseButton>>,
-    windows: Query<&Window>,
-    camera_q: Query<(&Camera, &GlobalTransform)>,
-    mut map_query: Query<&mut TileMap>,
-    mut resources: ResMut<PlayerResources>,
-) {
-    info!("TODO: building placement");
-    // This would implement mouse-based building placement
-    // 1. Convert mouse position to world coordinates
-    // 2. Convert world coordinates to grid position
-    // 3. Check resource requirements
-    // 4. Place building if possible
 }
 
 pub fn setup_grid(
@@ -134,7 +122,7 @@ pub fn synchronize_buildings_with_map(
     if let Ok(mut tile_map) = map_query.get_single_mut() {
         for (entity, position, size) in building_query.iter() {
             debug!("Syncing {entity:?} building with map at {position:?} with size {size:?}");
-            tile_map.place_entity(position.x, position.y, entity, (size.width, size.height));
+            tile_map.place(position.x, position.y, entity, (size.width, size.height));
         }
     }
 }

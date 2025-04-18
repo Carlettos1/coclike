@@ -23,8 +23,7 @@ pub fn town_hall(
             TownHall,
             Building::new_with_level(level, health),
             GridPosition::new_full(x, y, TOWNHALL_SIZE.x as usize, TOWNHALL_SIZE.y as usize),
-            Mesh2d(assets.town_hall.0.clone()),
-            MeshMaterial2d(assets.town_hall.1.clone()),
+            assets.get(&BuildingType::TownHall).to_component(),
         ))
         .id()
 }
@@ -45,8 +44,9 @@ pub fn gold_collector(
             ResourceCollector::new(ResourceType::Gold, rate),
             Building::new_with_level(level, health),
             GridPosition::new_full(x, y, COLLECTOR_SIZE.x as usize, COLLECTOR_SIZE.y as usize),
-            Mesh2d(assets.gold_collector.0.clone()),
-            MeshMaterial2d(assets.gold_collector.1.clone()),
+            assets
+                .get(&BuildingType::Collector(ResourceType::Gold))
+                .to_component(),
         ))
         .id()
 }
@@ -67,8 +67,9 @@ pub fn elixir_collector(
             ResourceCollector::new(ResourceType::Elixir, rate),
             Building::new_with_level(level, health),
             GridPosition::new_full(x, y, COLLECTOR_SIZE.x as usize, COLLECTOR_SIZE.y as usize),
-            Mesh2d(assets.elixir_collector.0.clone()),
-            MeshMaterial2d(assets.elixir_collector.1.clone()),
+            assets
+                .get(&BuildingType::Collector(ResourceType::Elixir))
+                .to_component(),
         ))
         .id()
 }
@@ -89,8 +90,9 @@ pub fn gold_storage(
             Storage::new(ResourceType::Gold, capacity),
             Building::new_with_level(level, health),
             GridPosition::new_full(x, y, STORAGE_SIZE.x as usize, STORAGE_SIZE.y as usize),
-            Mesh2d(assets.gold_storage.0.clone()),
-            MeshMaterial2d(assets.gold_storage.1.clone()),
+            assets
+                .get(&BuildingType::Storage(ResourceType::Gold))
+                .to_component(),
         ))
         .id()
 }
@@ -111,8 +113,9 @@ pub fn elixir_storage(
             Storage::new(ResourceType::Elixir, capacity),
             Building::new_with_level(level, health),
             GridPosition::new_full(x, y, STORAGE_SIZE.x as usize, STORAGE_SIZE.y as usize),
-            Mesh2d(assets.elixir_storage.0.clone()),
-            MeshMaterial2d(assets.elixir_storage.1.clone()),
+            assets
+                .get(&BuildingType::Storage(ResourceType::Elixir))
+                .to_component(),
         ))
         .id()
 }
@@ -135,8 +138,7 @@ pub fn defense_tower(
             Defense::new(damage, range, speed),
             Building::new_with_level(level, health),
             GridPosition::new_full(x, y, DEFENSE_SIZE.x as usize, DEFENSE_SIZE.y as usize),
-            Mesh2d(assets.defense.0.clone()),
-            MeshMaterial2d(assets.defense.1.clone()),
+            assets.get(&BuildingType::Defense).to_component(),
         ))
         .id()
 }
@@ -156,8 +158,7 @@ pub fn wall(
             Building::new_with_level(level, health),
             Wall::new(health),
             GridPosition::new_full(x, y, WALL_SIZE.x as usize, WALL_SIZE.y as usize),
-            Mesh2d(assets.wall.0.clone()),
-            MeshMaterial2d(assets.wall.1.clone()),
+            assets.get(&BuildingType::Wall).to_component(),
         ))
         .id()
 }
@@ -183,5 +184,15 @@ pub fn place_building(
         },
         BuildingType::Wall => wall(commands, assets, level, x, y),
         BuildingType::TownHall => town_hall(commands, assets, level, x, y),
+    }
+}
+
+pub fn to_size(building_type: BuildingType) -> (usize, usize) {
+    match building_type {
+        BuildingType::Defense => (DEFENSE_SIZE.x as usize, DEFENSE_SIZE.y as usize),
+        BuildingType::Collector(_) => (COLLECTOR_SIZE.x as usize, COLLECTOR_SIZE.y as usize),
+        BuildingType::Storage(_) => (STORAGE_SIZE.x as usize, STORAGE_SIZE.y as usize),
+        BuildingType::Wall => (WALL_SIZE.x as usize, WALL_SIZE.y as usize),
+        BuildingType::TownHall => (TOWNHALL_SIZE.x as usize, TOWNHALL_SIZE.y as usize),
     }
 }

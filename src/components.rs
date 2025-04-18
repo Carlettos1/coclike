@@ -53,35 +53,16 @@ impl TileMap {
         true
     }
 
-    pub fn place_entity(
-        &mut self,
-        x: usize,
-        y: usize,
-        entity: Entity,
-        size: (usize, usize),
-    ) -> bool {
-        // Check if all required tiles are free
-        for dy in 0..size.1 {
-            for dx in 0..size.0 {
-                if let Some(idx) = self.get_tile_idx(x + dx, y + dy) {
-                    if self.tiles[idx].is_some() {
-                        return false; // Tile already occupied
+    pub fn place(&mut self, x: usize, y: usize, entity: Entity, size: (usize, usize)) {
+        if self.can_place(x, y, size) {
+            for dy in 0..size.1 {
+                for dx in 0..size.0 {
+                    if let Some(idx) = self.get_tile_idx(x + dx, y + dy) {
+                        self.tiles[idx] = Some(entity);
                     }
-                } else {
-                    return false; // Out of bounds
                 }
             }
         }
-
-        // Place entity on all required tiles
-        for dy in 0..size.1 {
-            for dx in 0..size.0 {
-                if let Some(idx) = self.get_tile_idx(x + dx, y + dy) {
-                    self.tiles[idx] = Some(entity);
-                }
-            }
-        }
-        true
     }
 }
 
@@ -132,7 +113,7 @@ pub enum ResourceType {
     Elixir,
 }
 
-#[derive(Component, Debug, Clone, Copy)]
+#[derive(Component, Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum BuildingType {
     TownHall,
     Collector(ResourceType),
@@ -255,16 +236,46 @@ pub struct PlayerResources {
     pub resources: HashMap<ResourceType, f64>,
 }
 
-#[derive(Resource)]
+#[derive(Default, Resource, Deref, DerefMut)]
 pub struct BuildingAssets {
-    // TODO: HashMap<Building Type, (Handle mesh, Handle Colormaterial)>,
-    pub town_hall: (Handle<Mesh>, Handle<ColorMaterial>),
-    pub elixir_collector: (Handle<Mesh>, Handle<ColorMaterial>),
-    pub elixir_storage: (Handle<Mesh>, Handle<ColorMaterial>),
-    pub gold_collector: (Handle<Mesh>, Handle<ColorMaterial>),
-    pub gold_storage: (Handle<Mesh>, Handle<ColorMaterial>),
-    pub defense: (Handle<Mesh>, Handle<ColorMaterial>),
-    pub wall: (Handle<Mesh>, Handle<ColorMaterial>),
+    pub default: Handles,
+    #[deref]
+    pub map: HashMap<BuildingType, Handles>,
+}
+
+impl BuildingAssets {
+    pub fn new(default: Handles) -> Self {
+        BuildingAssets {
+            default,
+            ..Default::default()
+        }
+    }
+
+    pub fn get(&self, building_type: &BuildingType) -> &Handles {
+        self.map.get(building_type).unwrap_or(&self.default)
+    }
+}
+
+#[derive(Default, Debug, Hash, PartialEq)]
+pub struct Handles {
+    pub mesh: Handle<Mesh>,
+    pub color: Handle<ColorMaterial>,
+}
+
+impl Handles {
+    pub fn new(mesh: &Handle<Mesh>, color: &Handle<ColorMaterial>) -> Self {
+        Handles {
+            mesh: mesh.clone(),
+            color: color.clone(),
+        }
+    }
+
+    pub fn to_component(&self) -> (Mesh2d, MeshMaterial2d<ColorMaterial>) {
+        (
+            Mesh2d(self.mesh.clone()),
+            MeshMaterial2d(self.color.clone()),
+        )
+    }
 }
 
 // Marker for selected entity
@@ -331,4 +342,5 @@ pub enum EditorButton {
 #[derive(Resource, Default, Debug)]
 pub struct EditorState {
     pub selected_building: Option<BuildingType>,
+    pub is_selected: bool,
 }

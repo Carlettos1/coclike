@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 // Rectangle sizes
+pub const DEFAULT_SIZE: Vec2 = Vec2::new(1.0, 1.0);
 pub const TOWNHALL_SIZE: Vec2 = Vec2::new(4.0, 4.0);
 pub const COLLECTOR_SIZE: Vec2 = Vec2::new(3.0, 3.0);
 pub const STORAGE_SIZE: Vec2 = Vec2::new(4.0, 4.0);

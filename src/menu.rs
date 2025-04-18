@@ -51,13 +51,12 @@ pub fn setup_menu(mut commands: Commands, _asset_server: Res<AssetServer>) {
         });
 }
 
+type QueryTuple<'a> = (&'a Interaction, &'a MenuButton, &'a mut BackgroundColor);
+type Filters = (Changed<Interaction>, With<Button>);
 // Menu interaction system
 pub fn menu_interactions(
     mut next_state: ResMut<NextState<GameState>>,
-    mut interaction_query: Query<
-        (&Interaction, &MenuButton, &mut BackgroundColor),
-        (Changed<Interaction>, With<Button>),
-    >,
+    mut interaction_query: Query<QueryTuple, Filters>,
 ) {
     for (interaction, button, mut bg_color) in &mut interaction_query {
         info!("Main state Interaction: {interaction:?} on button {button:?}");
