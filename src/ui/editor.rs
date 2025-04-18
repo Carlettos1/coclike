@@ -1,7 +1,7 @@
 use crate::prelude::*;
 use bevy::prelude::*;
 
-pub fn cleanup_editor(mut commands: Commands, query: Query<Entity, With<BuildUI>>) {
+pub fn cleanup_editor(mut commands: Commands, query: Query<Entity, With<BuildUIMarker>>) {
     info!(
         "Doing menu cleanup of: {} items",
         query.iter().remaining().count()
@@ -21,7 +21,7 @@ pub fn setup_editor(mut commands: Commands) {
                 height: Val::Percent(100.0),
                 ..default()
             },
-            BuildUI,
+            BuildUIMarker,
         ))
         .with_children(|parent| {
             // Top panel for building selection
@@ -90,7 +90,7 @@ pub fn setup_editor(mut commands: Commands) {
                         ..default()
                     },
                     Button,
-                    BackgroundColor(Color::srgb(0.2, 0.2, 0.4)),
+                    ColorPalette::new_with_bg(BLUE_6, BLUE_4, BLUE_2),
                     EditorButton::Back,
                 ))
                 .with_children(|parent| {
@@ -104,51 +104,33 @@ pub fn setup_editor(mut commands: Commands) {
 
 fn spawn_building_button(parent: &mut ChildBuilder, name: &str, button_type: EditorButton) {
     parent
-        .spawn((
-            Button,
-            Node {
-                width: Val::Px(120.0),
-                height: Val::Px(50.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
-            button_type,
-        ))
+        .spawn((standard_button(), button_type))
         .with_children(|parent| {
             parent.spawn(Text(name.into()));
         });
 }
 
-type QueryTuple<'a> = (&'a Interaction, &'a EditorButton, &'a mut BackgroundColor);
-type Filters = (Changed<Interaction>, With<Button>);
-pub fn editor_interactions(
+/// Triggered bv [`handle_button_interactions`]
+pub fn editor_button_handler(
+    mut events: EventReader<ButtonInteractionEvent<EditorButton>>,
     mut next_state: ResMut<NextState<GameState>>,
     mut editor_state: ResMut<EditorState>,
-    mut button_query: Query<QueryTuple, Filters>,
 ) {
-    for (interaction, button, mut bg_color) in button_query.iter_mut() {
-        match *interaction {
-            Interaction::Pressed => {
-                match button {
-                    EditorButton::Back => {
-                        next_state.set(GameState::Playing);
-                    }
-                    EditorButton::Building(building) => {
-                        editor_state.selected_building = Some(*building);
-                        editor_state.is_selected = true;
-                    }
+    for event in events.read() {
+        match event {
+            ButtonInteractionEvent::Pressed(button) => match button {
+                EditorButton::Back => {
+                    next_state.set(GameState::Playing);
                 }
-                *bg_color = Color::srgb(0.35, 0.35, 0.35).into();
-            }
-            Interaction::Hovered => {
-                *bg_color = Color::srgb(0.25, 0.25, 0.25).into();
-            }
-            Interaction::None => {
-                *bg_color = Color::srgb(0.15, 0.15, 0.15).into();
+                EditorButton::Building(building) => {
+                    editor_state.selected_building = Some(*building);
+                    editor_state.is_selected = true;
+                }
+            },
+            ButtonInteractionEvent::None => {
                 editor_state.is_selected = false;
             }
+            _ => (),
         }
     }
 }

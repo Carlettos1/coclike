@@ -1,13 +1,5 @@
 use bevy::{prelude::*, utils::HashMap};
 
-// Button marker component
-#[derive(Component, Debug, Clone, Copy)]
-pub enum MenuButton {
-    Play,
-    Editor,
-    Quit,
-}
-
 // Map and grid components
 #[derive(Component)]
 pub struct TileMap {
@@ -286,9 +278,6 @@ pub struct Selected;
 pub struct GridVisual;
 
 #[derive(Component)]
-pub struct MainMenuUI;
-
-#[derive(Component)]
 pub struct GameCamera {
     pub speed: f32,
     pub is_dragging: bool,
@@ -312,33 +301,6 @@ impl Default for GameCamera {
         }
     }
 }
-
-#[derive(Component)]
-pub struct GameHUD;
-
-#[derive(Component)]
-pub struct ResourceDisplay;
-
-#[derive(Component)]
-pub struct DebugOverlay;
-
-#[derive(Resource, Default)]
-pub struct DebugState {
-    pub visible: bool,
-}
-
-#[derive(Component)]
-pub struct BuildButton;
-
-#[derive(Component)]
-pub struct BuildUI;
-
-#[derive(Component)]
-pub enum EditorButton {
-    Building(BuildingType),
-    Back,
-}
-
 #[derive(Resource, Default, Debug)]
 pub struct EditorState {
     pub selected_building: Option<BuildingType>,

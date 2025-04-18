@@ -6,6 +6,8 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .init_state::<GameState>()
+        .add_event::<ButtonInteractionEvent<MenuButton>>()
+        .add_event::<ButtonInteractionEvent<EditorButton>>()
         .add_systems(Startup, setup_camera)
         .add_systems(OnEnter(GameState::MainMenu), setup_menu)
         .add_systems(OnExit(GameState::MainMenu), cleanup_menu)
@@ -29,7 +31,9 @@ fn main() {
         .add_systems(
             Update,
             (
-                menu_interactions,
+                handle_button_interactions::<MenuButton>,
+                handle_button_interactions::<EditorButton>,
+                menu_button_handler,
                 (
                     collect_resources,
                     synchronize_buildings_with_map,
@@ -42,7 +46,7 @@ fn main() {
                     .run_if(in_state(GameState::Playing)),
                 (
                     synchronize_buildings_with_map,
-                    editor_interactions,
+                    editor_button_handler,
                     place_editor_building,
                     camera_movement,
                     camera_zoom,
